@@ -23,8 +23,12 @@ classifiers = [
     "Typing :: Typed"
 ]
 dependencies = [
+    "attrs~=23.1.0",
     "click~=8.1.7",
     "importlib-metadata>=6.8.0",
+    "Jinja2~=3.1.2",
+    "pyyaml~=6.0.1",
+    'tomli~=2.0.1 ; python_version < "3.11"',
     "typing-extensions>=4.7",
     "sghi-commons @ git+https://github.com/savannahghi/sghi-commons.git@feat-add-registry",
 ]
@@ -76,7 +80,7 @@ test = [
 ]
 
 [project.scripts]
-ml-pipeline = "sghi.ml_pipeline.__main__:main"
+ml-pipeline = "sghi.ml_pipeline.runtime.__main__:main"
 
 [project.urls]
 changelog = "https://github.com/savannahghi/sghi-ml-pipeline/blob/develop/docs/CHANGELOG.md"
