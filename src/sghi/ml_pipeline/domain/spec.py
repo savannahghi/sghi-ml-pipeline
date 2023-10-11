@@ -17,18 +17,24 @@ _LD = TypeVar("_LD")
 
 
 class Extract(Disposable, Generic[_ET], metaclass=ABCMeta):
+    __slots__ = ()
+
     @abstractmethod
     def __call__(self) -> _ET:
         ...
 
 
 class Transform(Disposable, Generic[_ET, _LD], metaclass=ABCMeta):
+    __slots__ = ()
+
     @abstractmethod
     def __call__(self, extract: _ET) -> _LD:
         ...
 
 
 class Load(Disposable, Generic[_LD], metaclass=ABCMeta):
+    __slots__ = ()
+
     @abstractmethod
     def __call__(self, output: _LD) -> None:
         ...
@@ -40,6 +46,8 @@ class Load(Disposable, Generic[_LD], metaclass=ABCMeta):
 
 
 class ETLWorkflow(Generic[_ET, _LD], metaclass=ABCMeta):
+    __slots__ = ()
+
     @property
     @abstractmethod
     def extractor(self) -> Extract[_ET]:
