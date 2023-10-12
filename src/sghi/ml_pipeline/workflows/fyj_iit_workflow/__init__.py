@@ -28,7 +28,7 @@ AGE_LABELS: Final[Sequence[str]] = (
     "61+",
 )
 
-COMMON_VALUE_MISSING_STATES: Sequence[str | None] = (
+COMMON_VALUE_MISSING_STATES: Final[Sequence[str | None]] = (
     None,
     "",
     "none",
@@ -36,7 +36,7 @@ COMMON_VALUE_MISSING_STATES: Sequence[str | None] = (
     "Nan",
 )
 
-NUTRITIONAL_STATUS_TRANSFORMATION_MAPPING: Mapping[str, str] = {
+NUTRITIONAL_STATUS_TRANSFORMATION_MAPPING: Final[Mapping[str, str]] = {
     "": "Unknown",
     "At Risk ": "Moderate acute malnutrition",
     "MAM": "Moderate acute malnutrition",
@@ -51,7 +51,7 @@ NUTRITIONAL_STATUS_TRANSFORMATION_MAPPING: Mapping[str, str] = {
     "Unknown": "Unknown",
 }
 
-SELECTED_FEATURES: Sequence[str] = (
+SELECTED_FEATURES: Final[Sequence[str]] = (
     "age_group",
     "at_risk_population",
     "differentiated_care",
@@ -72,12 +72,12 @@ SELECTED_FEATURES: Sequence[str] = (
     "years_on_art",
 )
 
-TARGET_COLUMN_TRANSFORMATION_MAPPING: Mapping[str, int] = {
+TARGET_COLUMN_TRANSFORMATION_MAPPING: Final[Mapping[str, int]] = {
     "honored": 1,
     "missed": 0,
 }
 
-WHO_STAGING_TRANSFORMATION_MAPPING: Mapping[str, str] = {
+WHO_STAGING_TRANSFORMATION_MAPPING: Final[Mapping[str, str]] = {
     "Stage 1": "1",
     "Stage 2": "2",
     "Stage 3": "3",
