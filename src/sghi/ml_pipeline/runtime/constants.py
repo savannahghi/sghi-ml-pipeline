@@ -6,6 +6,8 @@ APP_VERBOSITY_REG_KEY: Final[str] = "sghi.ml-pipeline.runtime.verbosity"
 
 ETL_WORKFLOW_REG_KEY: Final[str] = "sghi.ml-pipeline.runtime.etl_workflows"
 
+ETL_WORKFLOWS_CONFIG_KEY: Final[str] = "ETL_WORKFLOWS"
+
 LOGGING_CONFIG_KEY: Final[str] = "LOGGING"
 
 DEFAULT_CONFIG: Final[dict[str, Any]] = {

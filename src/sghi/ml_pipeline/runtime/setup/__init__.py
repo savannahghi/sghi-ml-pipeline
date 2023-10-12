@@ -43,9 +43,14 @@ def setup(
 
     initializers: list[SettingInitializer] = list(settings_initializers or [])
     if not disable_default_initializers:
-        from .setting_initializers import LoggingInitializer
+        from .setting_initializers import (
+            ETLWorkflowsInitializer,
+            LoggingInitializer,
+        )
 
         initializers.insert(0, LoggingInitializer())
+        initializers.insert(1, ETLWorkflowsInitializer())
+
     sghi.app.registry[APP_LOG_LEVEL_REG_KEY] = log_level
     config: Config = Config.of(
         settings=settings_dict,

@@ -176,3 +176,7 @@ def main(
         _LOGGER.exception(_err_msg)
         app_dispatcher.send(signals.UnhandledRuntimeErrorSignal(_err_msg, exp))
         sys.exit(5)
+
+
+if __name__ == "__main__":
+    main(auto_envvar_prefix="ML_PIPELINE")

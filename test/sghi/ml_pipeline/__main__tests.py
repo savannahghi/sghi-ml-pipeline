@@ -1,7 +1,9 @@
-from sghi.ml_pipeline.__main__ import main
+from sghi.ml_pipeline.runtime.usecases import list_workflows
+
+
+def test_list_workflows() -> None:
+    list_workflows()
 
 
 def test_main() -> None:
-    main()
-
     assert True
