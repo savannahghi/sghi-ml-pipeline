@@ -80,6 +80,24 @@ class BQueryExtractMeta:
 class BQueryExtractResult(Generic[_ET]):
     results: Mapping[str, _ET] = field()
 
+    @property
+    def default_result(self) -> _ET:
+        """The default result.
+
+        .. note::
+
+            Only available if a result with a job name equal to
+            :attr:`DEFAULT_JOB_NAME` is present.
+
+        :return: The default result.
+
+        :raise KeyError: If no such result is present.
+        """
+
+        # TODO: Consider raising a more specific exception here instead of
+        #  KeyError.
+        return self.results[DEFAULT_JOB_NAME]
+
 
 # =============================================================================
 # SPEC IMPLEMENTATIONS
@@ -92,6 +110,10 @@ class SimpleBQueryExtract(Extract[BQueryExtractResult[_ET]], Generic[_ET]):
     _extract_preprocessor: _ExtractPreProcessor[_ET] = field()
     _client: bigquery.Client = field(factory=bigquery.Client)
     _is_disposed: bool = field(default=False, init=False)
+
+    @not_disposed
+    def __enter__(self) -> Self:
+        return super().__enter__()
 
     @not_disposed
     def __call__(self) -> BQueryExtractResult[_ET]:
@@ -152,3 +174,18 @@ class SimpleBQueryExtract(Extract[BQueryExtractResult[_ET]], Generic[_ET]):
             extract_preprocessor=extract_preprocessor,  # pyright: ignore
             client=client,  # pyright: ignore
         )
+
+
+# =============================================================================
+# MODULE EXPORTS
+# =============================================================================
+
+
+__all__ = [
+    "DEFAULT_JOB_NAME",
+    "BQueryExtractJobDescriptor",
+    "BQueryExtractMeta",
+    "BQueryExtractResult",
+    "SimpleBQueryExtract",
+    "query_job_to_pd_dataframe",
+]
