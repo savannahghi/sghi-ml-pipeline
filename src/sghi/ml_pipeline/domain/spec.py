@@ -8,7 +8,7 @@ from sghi.disposable import Disposable
 # =============================================================================
 
 _ET = TypeVar("_ET")
-_LD = TypeVar("_LD")
+_LT = TypeVar("_LT")
 
 
 # =============================================================================
@@ -24,19 +24,19 @@ class Extract(Disposable, Generic[_ET], metaclass=ABCMeta):
         ...
 
 
-class Transform(Disposable, Generic[_ET, _LD], metaclass=ABCMeta):
+class Transform(Disposable, Generic[_ET, _LT], metaclass=ABCMeta):
     __slots__ = ()
 
     @abstractmethod
-    def __call__(self, extract: _ET) -> _LD:
+    def __call__(self, extract: _ET) -> _LT:
         ...
 
 
-class Load(Disposable, Generic[_LD], metaclass=ABCMeta):
+class Load(Disposable, Generic[_LT], metaclass=ABCMeta):
     __slots__ = ()
 
     @abstractmethod
-    def __call__(self, output: _LD) -> None:
+    def __call__(self, output: _LT) -> None:
         ...
 
 
@@ -45,8 +45,23 @@ class Load(Disposable, Generic[_LD], metaclass=ABCMeta):
 # =============================================================================
 
 
-class ETLWorkflow(Generic[_ET, _LD], metaclass=ABCMeta):
+class ETLWorkflow(Generic[_ET, _LT], metaclass=ABCMeta):
     __slots__ = ()
+
+    @property
+    @abstractmethod
+    def id(self) -> str:  # noqa: A003
+        ...
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        ...
+
+    @property
+    @abstractmethod
+    def description(self) -> str | None:
+        ...
 
     @property
     @abstractmethod
@@ -55,10 +70,10 @@ class ETLWorkflow(Generic[_ET, _LD], metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def transformer(self) -> Transform[_ET, _LD]:
+    def transformer(self) -> Transform[_ET, _LT]:
         ...
 
     @property
     @abstractmethod
-    def loader(self) -> Load[_LD]:
+    def loader(self) -> Load[_LT]:
         ...
