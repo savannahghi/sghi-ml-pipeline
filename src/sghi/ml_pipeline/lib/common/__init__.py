@@ -105,7 +105,7 @@ class NoOpLoad(Load[Any]):
 
     @not_disposed
     def __enter__(self) -> Self:
-        return super().__enter__()
+        return super(Load, self).__enter__()
 
     @not_disposed
     def __call__(self, output: Any) -> None:  # noqa: ANN401
@@ -117,6 +117,7 @@ class NoOpLoad(Load[Any]):
 
     def dispose(self) -> None:
         self._is_disposed = True
+        self._logger.debug("Disposal complete.")
 
 
 # =============================================================================
@@ -126,4 +127,5 @@ class NoOpLoad(Load[Any]):
 
 __all__ = [
     "NoOpLoad",
+    "SimpleETLWorkflow",
 ]

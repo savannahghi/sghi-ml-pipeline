@@ -1,4 +1,6 @@
+import logging
 from collections.abc import Callable, Mapping
+from logging import Logger
 from typing import Final, Generic, TypeVar
 
 import pandas as pd
@@ -8,7 +10,7 @@ from typing_extensions import Self
 
 from sghi.disposable import not_disposed
 from sghi.ml_pipeline.domain import Extract
-from sghi.utils import ensure_instance_of, ensure_not_none
+from sghi.utils import ensure_instance_of, ensure_not_none, type_fqn
 
 # =============================================================================
 # TYPES
@@ -110,15 +112,20 @@ class SimpleBQueryExtract(Extract[BQueryExtractResult[_ET]], Generic[_ET]):
     _extract_preprocessor: _ExtractPreProcessor[_ET] = field()
     _client: bigquery.Client = field(factory=bigquery.Client)
     _is_disposed: bool = field(default=False, init=False)
+    _logger: Logger = field(init=False)
+
+    def __attrs_post_init__(self) -> None:
+        self._logger: Logger = logging.getLogger(type_fqn(self.__class__))
 
     @not_disposed
     def __enter__(self) -> Self:
-        return super().__enter__()
+        return super(Extract, self).__enter__()
 
     @not_disposed
     def __call__(self) -> BQueryExtractResult[_ET]:
+        self._logger.info("Extract from BigQuery.")
         extract_results = {
-            job_name: self._query(job_descriptor=job_descriptor)
+            job_name: self._query(job_name, job_descriptor)
             for job_name, job_descriptor in self._extract_metadata.jobs.items()
         }
         return BQueryExtractResult(results=extract_results)
@@ -130,8 +137,14 @@ class SimpleBQueryExtract(Extract[BQueryExtractResult[_ET]], Generic[_ET]):
     def dispose(self) -> None:
         self._is_disposed = True
         self._client.close()
+        self._logger.debug("Disposal complete.")
 
-    def _query(self, job_descriptor: BQueryExtractJobDescriptor) -> _ET:
+    def _query(
+        self,
+        job_name: str,
+        job_descriptor: BQueryExtractJobDescriptor,
+    ) -> _ET:
+        self._logger.debug("Executing extract job '%s'.", job_name)
         job: bigquery.QueryJob = self._client.query(
             query=job_descriptor.sql,
             project=job_descriptor.project_id,
@@ -152,7 +165,7 @@ class SimpleBQueryExtract(Extract[BQueryExtractResult[_ET]], Generic[_ET]):
         return cls(
             extract_metadata=extract_metadata,  # pyright: ignore
             extract_preprocessor=extract_preprocessor,  # pyright: ignore
-            client=client,  # pyright: ignore
+            client=client or bigquery.Client(),  # pyright: ignore
         )
 
     @classmethod
@@ -172,7 +185,7 @@ class SimpleBQueryExtract(Extract[BQueryExtractResult[_ET]], Generic[_ET]):
         return cls(
             extract_metadata=extract_meta,  # pyright: ignore
             extract_preprocessor=extract_preprocessor,  # pyright: ignore
-            client=client,  # pyright: ignore
+            client=client or bigquery.Client(),  # pyright: ignore
         )
 
 

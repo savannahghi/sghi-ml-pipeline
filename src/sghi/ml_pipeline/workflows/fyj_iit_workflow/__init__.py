@@ -7,9 +7,15 @@ import pandas as pd
 from attrs import define, field
 from typing_extensions import Self
 
+import sghi.app
 from sghi.disposable import not_disposed
-from sghi.ml_pipeline.domain import Transform
-from sghi.ml_pipeline.lib.big_query import BQueryExtractResult
+from sghi.ml_pipeline.domain import ETLWorkflow, Transform
+from sghi.ml_pipeline.lib.big_query import (
+    BQueryExtractJobDescriptor,
+    BQueryExtractResult,
+    SimpleBQueryExtract,
+)
+from sghi.ml_pipeline.lib.common import SimpleETLWorkflow
 from sghi.utils import ensure_instance_of, type_fqn
 
 # =============================================================================
@@ -116,7 +122,7 @@ class ProcessTrainingData(
 
     @not_disposed
     def __enter__(self) -> Self:
-        return super().__enter__()
+        return super(Transform, self).__enter__()
 
     @not_disposed
     def __call__(
@@ -142,6 +148,7 @@ class ProcessTrainingData(
 
     def dispose(self) -> None:
         self._is_disposed = True
+        self._logger.debug("Disposal complete.")
 
     @staticmethod
     def _encode_target_column(df: pd.DataFrame) -> None:
@@ -243,3 +250,26 @@ class ProcessTrainingData(
         df["who_stage"] = df["who_stage"].replace(
             WHO_STAGING_TRANSFORMATION_MAPPING,
         )
+
+
+# =============================================================================
+# ETL WORKFLOW FACTORY
+# =============================================================================
+
+
+def fyj_iit_td_etl_workflow_factory() -> (
+    ETLWorkflow[
+        BQueryExtractResult[pd.DataFrame],
+        pd.DataFrame,
+    ]
+):
+    return SimpleETLWorkflow.of(
+        id="fyj-iit-training-data",
+        name="FyJ IIT Training Data",
+        extractor=SimpleBQueryExtract.of_single_job_descriptor(
+            BQueryExtractJobDescriptor(
+                sql=sghi.app.conf.FYJ_IIT_TRAINING_DATA_QUERY,
+            ),
+        ),
+        transformer=ProcessTrainingData(),
+    )

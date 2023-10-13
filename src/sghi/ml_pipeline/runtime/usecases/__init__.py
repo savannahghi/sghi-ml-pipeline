@@ -71,7 +71,7 @@ def list_workflows() -> Mapping[str, ETLWorkflow]:
     """List all loaded and registered ETLWorkflows."""
 
     _init_and_register_workflows()
-    return sghi.app.registry.get(ETL_WORKFLOWS_CONFIG_KEY, {})
+    return sghi.app.registry.get(ETL_WORKFLOW_REG_KEY, {})
 
 
 def run(select: Sequence[str] | None = None) -> None:
