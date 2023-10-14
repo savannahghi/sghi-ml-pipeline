@@ -73,7 +73,7 @@ class SimpleUI(UI):
         signal: signals.CompletedETLWorkflow,
     ) -> None:
         print_success(
-            "- Completed ETLWorkflow for extract '{}:{}' ✔️".format(
+            "- Completed the workflow '{}:{}' ✔️".format(
                 signal.etl_workflow.id,
                 signal.etl_workflow.name,
             ),

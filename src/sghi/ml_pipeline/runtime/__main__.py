@@ -94,9 +94,7 @@ def _set_ui(preferred_ui: Supported_UIs) -> UI:
 # =============================================================================
 
 
-@click.command(
-    epilog="Lets do this! ;)",
-)
+@click.group(epilog="Lets do this! ;)", invoke_without_command=True)
 @click.option(
     "-c",
     "--config",
@@ -161,7 +159,9 @@ def _set_ui(preferred_ui: Supported_UIs) -> UI:
     ),
 )
 @click.version_option(package_name="sghi-ml-pipeline", message="%(version)s")
+@click.pass_context
 def main(
+    ctx: click.Context,
     config: str | None,
     config_format: CONFIG_FORMATS,
     log_level: str,
@@ -172,6 +172,7 @@ def main(
 
     \f
 
+    :param ctx: An object holding the CLI's context.
     :param config: An option path to a configuration file.
     :param config_format: The format of the config contents. Can be 'auto'
         which allows the configuration format to be determined from the
@@ -183,27 +184,90 @@ def main(
 
     :return: None.
     """
-    app_dispatcher: Dispatcher = sghi.app.dispatcher
-
     app_ui: UI = _set_ui(preferred_ui=ui)
     app_ui.start()
 
     _configure_runtime(
-        app_dispatcher=app_dispatcher,
+        app_dispatcher=sghi.app.dispatcher,
         config=config,
         config_format=config_format,
         log_level=log_level,
         verbosity=verbosity,
     )
 
+    ctx.obj = app_ui
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(run)
+
+
+@main.command(name="list")
+@click.pass_obj
+def list_workflows(app_ui: UI) -> None:
+    """List all available workflows."""
+
+    app_dispatcher: Dispatcher = sghi.app.dispatcher
+
+    try:
+        app_dispatcher.send(signals.AppReady())
+
+        from .tui.simple.printers import print_debug, print_info
+
+        # Delay this import as late as possible to avoid cyclic imports,
+        # especially before application setup has completed.
+        from .usecases import list_workflows as _list_workflows
+
+        print_info("")
+        print_info("=========================================================")
+        print_info("|               AVAILABLE WORKFLOWS                     |")
+        print_info("=========================================================")
+        print_info("")
+
+        for wf_id, workflow in _list_workflows().items():
+            print_debug(f"\t- {wf_id}:{workflow.name}")
+
+        print_info("")
+        print_info("---------------------------------------------------------")
+        app_dispatcher.send(signals.AppStopping())
+    except Exception as exp:
+        _err_msg: str = (
+            "An unhandled error occurred at runtime. The cause of the error "
+            f"was: {exp!s}."
+        )
+        _LOGGER.exception(_err_msg)
+        app_dispatcher.send(signals.UnhandledRuntimeErrorSignal(_err_msg, exp))
+        sys.exit(5)
+
+    app_ui.stop()
+
+
+@main.command()
+@click.option(
+    "-s",
+    "--select",
+    "selected",
+    default=(),
+    help=(
+        "The id of a specific workflow to run. Can be provided more than "
+        "once. If no selection is made, then all available workflows are "
+        "executed."
+    ),
+    multiple=True,
+    type=str,
+)
+@click.pass_obj
+def run(app_ui: UI, selected: tuple[str, ...]) -> None:
+    """Run the selected workflows. Run all when no selection is made."""
+
+    app_dispatcher: Dispatcher = sghi.app.dispatcher
+
     try:
         app_dispatcher.send(signals.AppReady())
 
         # Delay this import as late as possible to avoid cyclic imports,
         # especially before application setup has completed.
-        from .usecases import run
+        from .usecases import run as _run
 
-        run()
+        _run(select=selected if selected else None)
         app_dispatcher.send(signals.AppStopping())
     except Exception as exp:
         _err_msg: str = (
