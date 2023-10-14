@@ -1,7 +1,7 @@
 import logging
 import sys
 from logging import Logger
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, Literal
 
 import click
 
@@ -12,9 +12,18 @@ from sghi.dispatch import Dispatcher
 from . import signals
 from .constants import APP_VERBOSITY_REG_KEY
 from .setup import CONFIG_FORMATS, LoadConfigError, load_config_file, setup
+from .ui import UI, NoUI
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+
+# =============================================================================
+# TYPES
+# =============================================================================
+
+
+Supported_UIs = Literal["none", "simple"]
+
 
 # =============================================================================
 # CONSTANTS
@@ -52,7 +61,7 @@ def _configure_runtime(
     except LoadConfigError as exp:
         _default_err: str = "Error loading configuration."
         app_dispatcher.send(
-            signals.ConfigErrorSignal(exp.message or _default_err, exp),
+            signals.ConfigFailed(exp.message or _default_err, exp),
         )
         sys.exit(2)
     except ConfigurationError as exp:
@@ -63,8 +72,21 @@ def _configure_runtime(
         # This might not be logged as logging may still be un-configured when
         # this error occurs.
         _LOGGER.exception(_err_msg)
-        app_dispatcher.send(signals.ConfigErrorSignal(_err_msg, exp))
+        app_dispatcher.send(signals.ConfigFailed(_err_msg, exp))
         sys.exit(3)
+
+
+def _set_ui(preferred_ui: Supported_UIs) -> UI:
+    match preferred_ui:
+        case "none":
+            return NoUI()
+        case "simple":
+            from sghi.ml_pipeline.runtime.tui import SimpleUI
+
+            return SimpleUI()
+        case _:
+            _err_msg: str = "Unsupported UI option given."
+            raise ConfigurationError(message=_err_msg)
 
 
 # =============================================================================
@@ -119,6 +141,14 @@ def _configure_runtime(
     ),
 )
 @click.option(
+    "--ui",
+    default="none",
+    envvar="ML_PIPELINE_UI",
+    help="Select a user interface to use.",
+    show_default=True,
+    type=click.Choice(choices=("none", "simple")),
+)
+@click.option(
     "-v",
     "--verbose",
     "verbosity",
@@ -135,6 +165,7 @@ def main(
     config: str | None,
     config_format: CONFIG_FORMATS,
     log_level: str,
+    ui: Supported_UIs,
     verbosity: int,
 ) -> None:
     """A tool for executing ML workflows.
@@ -146,12 +177,16 @@ def main(
         which allows the configuration format to be determined from the
         extension of the file name.
     :param log_level: The log level of the "root application" logger.
+    :param ui: The preferred user interface to use.
     :param verbosity: The level of output to expect from the application on
         stdout. This is different from log level.
 
     :return: None.
     """
     app_dispatcher: Dispatcher = sghi.app.dispatcher
+
+    app_ui: UI = _set_ui(preferred_ui=ui)
+    app_ui.start()
 
     _configure_runtime(
         app_dispatcher=app_dispatcher,
@@ -162,6 +197,8 @@ def main(
     )
 
     try:
+        app_dispatcher.send(signals.AppReady())
+
         # Delay this import as late as possible to avoid cyclic imports,
         # especially before application setup has completed.
         from .usecases import run
@@ -176,6 +213,8 @@ def main(
         _LOGGER.exception(_err_msg)
         app_dispatcher.send(signals.UnhandledRuntimeErrorSignal(_err_msg, exp))
         sys.exit(5)
+
+    app_ui.stop()
 
 
 if __name__ == "__main__":

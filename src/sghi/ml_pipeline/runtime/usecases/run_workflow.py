@@ -5,7 +5,9 @@ from typing import Any
 
 from attrs import define, field, validators
 
+import sghi.app
 from sghi.ml_pipeline.domain import ETLWorkflow, Extract, Load, Transform
+from sghi.ml_pipeline.runtime import signals
 from sghi.task import Task, pipe
 from sghi.utils import type_fqn
 
@@ -34,6 +36,30 @@ class RunWorkflow(Task[None, None]):
             self._etl_workflow.id,
             self._etl_workflow.name,
         )
+        try:
+            sghi.app.dispatcher.send(
+                signals.StartingETLWorkflow(self._etl_workflow),
+            )
+            self._run_etl_workflow()
+            sghi.app.dispatcher.send(
+                signals.CompletedETLWorkflow(self._etl_workflow),
+            )
+        except Exception as exp:
+            self._logger.exception(
+                "Error executing ETLWorkflow '%s:%s'.",
+                self._etl_workflow.id,
+                self._etl_workflow.name,
+            )
+            sghi.app.dispatcher.send(
+                signals.ETLWorkflowFailed(
+                    etl_workflow=self._etl_workflow,
+                    err_message=str(exp),
+                    exception=exp,
+                ),
+            )
+            raise
+
+    def _run_etl_workflow(self) -> None:
         with self._workflow_stack:
             extractor: Extract = self._workflow_stack.enter_context(
                 self._etl_workflow.extractor,
