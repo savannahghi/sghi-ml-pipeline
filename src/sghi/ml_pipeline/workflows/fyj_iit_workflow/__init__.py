@@ -10,13 +10,13 @@ from typing_extensions import Self
 import sghi.app
 from sghi.disposable import not_disposed
 from sghi.ml_pipeline.domain import ETLWorkflow, Transform
-from sghi.ml_pipeline.lib.big_query import (
+from sghi.ml_pipeline.lib.common import SimpleETLWorkflow
+from sghi.ml_pipeline.lib.google.big_query import (
     BQueryExtractJobDescriptor,
     BQueryExtractMeta,
     BQueryExtractResult,
     SimpleBQueryExtract,
 )
-from sghi.ml_pipeline.lib.common import SimpleETLWorkflow
 from sghi.utils import ensure_instance_of, type_fqn
 
 # =============================================================================
