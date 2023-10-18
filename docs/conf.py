@@ -54,7 +54,16 @@ exclude_patterns = []
 # Be strict about any broken references
 nitpicky = True
 
-nitpick_ignore = []
+nitpick_ignore = [
+    ("py:class", "TracebackType"),  # Used as type annotation. Only available when type checking
+    ("py:class", "sghi.disposable.Disposable"),  # docs aren't published yet
+    ("py:class", "sghi.ml_pipeline.domain._PDT"),  # private type annotations
+    ("py:class", "sghi.ml_pipeline.domain._RDT"),  # private type annotations
+    ("py:exc", "sghi.disposable.ResourceDisposedError"),  # docs aren't published yet
+    ("py:func", "sghi.disposable.not_disposed"),  # docs aren't published yet
+    ("py:obj", "sghi.ml_pipeline.domain._PDT"),  # private type annotations
+    ("py:obj", "sghi.ml_pipeline.domain._RDT"),  # private type annotations
+]
 
 templates_path = ["templates"]
 
